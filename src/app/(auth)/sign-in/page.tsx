@@ -2,7 +2,9 @@
 
 import Link from "next/link"
 import { valibotResolver } from "@hookform/resolvers/valibot"
+import { useAction } from "next-safe-action/hooks"
 import { useForm } from "react-hook-form"
+import { toast } from "sonner"
 
 import type { SignInInput } from "~/lib/validators/auth"
 import { SubmitButton } from "~/components/submit-button"
@@ -16,6 +18,7 @@ import {
 } from "~/components/ui/form"
 import { Input } from "~/components/ui/input"
 import { SignInSchema } from "~/lib/validators/auth"
+import { signIn } from "../actions"
 
 export default function Page() {
   return (
@@ -47,9 +50,18 @@ function SignInForm() {
       password: "",
     },
   })
+  const { execute, status } = useAction(signIn, {
+    onSettled: ({ data }) => {
+      if (data?.error) {
+        toast.error("Ocurrió un error", {
+          description: data.error,
+        })
+      }
+    },
+  })
 
   async function onSubmit(values: SignInInput) {
-    console.log(values)
+    execute(values)
   }
 
   return (
@@ -81,7 +93,7 @@ function SignInForm() {
             </FormItem>
           )}
         />
-        <SubmitButton className="w-full" isSubmitting={false}>
+        <SubmitButton className="w-full" isSubmitting={status === "executing"}>
           Iniciar sesión
         </SubmitButton>
       </form>

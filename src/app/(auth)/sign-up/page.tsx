@@ -2,7 +2,9 @@
 
 import Link from "next/link"
 import { valibotResolver } from "@hookform/resolvers/valibot"
+import { useAction } from "next-safe-action/hooks"
 import { useForm } from "react-hook-form"
+import { toast } from "sonner"
 
 import type { SignUpInput } from "~/lib/validators/auth"
 import { SubmitButton } from "~/components/submit-button"
@@ -17,6 +19,7 @@ import {
 } from "~/components/ui/form"
 import { Input } from "~/components/ui/input"
 import { SignUpSchema } from "~/lib/validators/auth"
+import { signUp } from "../actions"
 
 export default function Page() {
   return (
@@ -49,9 +52,18 @@ function SignUpForm() {
       passwordConfirm: "",
     },
   })
+  const { execute, status } = useAction(signUp, {
+    onSettled: ({ data }) => {
+      if (data?.error) {
+        toast.error("Ocurrió un error", {
+          description: data.error,
+        })
+      }
+    },
+  })
 
   async function onSubmit(values: SignUpInput) {
-    console.log(values)
+    execute(values)
   }
 
   return (
@@ -103,7 +115,7 @@ function SignUpForm() {
             </FormItem>
           )}
         />
-        <SubmitButton className="w-full" isSubmitting={false}>
+        <SubmitButton className="w-full" isSubmitting={status === "executing"}>
           Registrarte
         </SubmitButton>
       </form>

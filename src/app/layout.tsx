@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google"
 
 import "../globals.css"
 
+import { Toaster } from "~/components/ui/sonner"
 import { cn } from "~/lib/utils"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
@@ -32,6 +33,7 @@ export default function RootLayout({
         )}
       >
         {children}
+        <Toaster closeButton />
       </body>
     </html>
   )
