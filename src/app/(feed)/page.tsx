@@ -5,9 +5,11 @@ import { redirect } from "next/navigation"
 import { Button } from "~/components/ui/button"
 import { lucia } from "~/server/auth"
 import { validateRequest } from "~/server/auth/validate-request"
+import { getRecipes } from "~/server/models/recipe"
 
 export default async function Page() {
   const { user } = await validateRequest()
+  const recipes = await getRecipes()
 
   return (
     <main className="min-h-screen space-y-1.5">
@@ -48,6 +50,11 @@ export default async function Page() {
           </Button>
         </form>
       )}
+      <ul>
+        {recipes.map((recipe) => (
+          <li key={recipe.id}>{recipe.title}</li>
+        ))}
+      </ul>
     </main>
   )
 }
