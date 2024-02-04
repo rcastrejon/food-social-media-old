@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 import { Button } from "~/components/ui/button"
 
 export default function Page() {
@@ -7,6 +9,12 @@ export default function Page() {
         Hola, mundo!
       </h2>
       <Button size="sm">Noop</Button>
+      <Button size="sm" asChild>
+        <Link href="/sign-up">Registrarte</Link>
+      </Button>
+      <Button size="sm" asChild>
+        <Link href="#">Iniciar sesión</Link>
+      </Button>
     </main>
   )
 }
