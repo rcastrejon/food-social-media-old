@@ -2,11 +2,16 @@ import "server-only"
 
 import { DrizzleError } from "drizzle-orm/errors"
 import { sql } from "drizzle-orm/sql"
-import { generateId } from "lucia"
 import { Argon2id } from "oslo/password"
 
+import { newId } from "~/lib/ids"
 import { db } from "../db"
 import { userTable } from "../db/schema"
+
+const ERROR = {
+  usernameTaken: "username-taken",
+  invalidUsernamePass: "invalid-username-pass",
+} as const
 
 export async function getUserByUsername(username: string) {
   return await db.query.userTable.findFirst({
@@ -22,7 +27,7 @@ export async function createUser({
   password: string
 }) {
   const hashedPassword = await new Argon2id().hash(password)
-  const userId = generateId(15)
+  const userId = newId("user")
 
   // check if username is unique, for that we have to do a case insensitive search.
   // if the username is unique, create the user.
@@ -43,10 +48,12 @@ export async function createUser({
     })
   } catch (e) {
     if (e instanceof DrizzleError) {
+      // rollback ocurred, username is taken.
       return {
-        error: "username-taken" as const,
+        error: ERROR.usernameTaken,
       }
     }
+    throw e
   }
   return { userId }
 }
@@ -60,14 +67,14 @@ export async function verifyUsernamePassword({
 }) {
   const existingUser = await getUserByUsername(username)
   if (!existingUser) {
-    return { error: "username-password-error" as const }
+    return { error: ERROR.invalidUsernamePass }
   }
   const validPassword = await new Argon2id().verify(
     existingUser.hashedPassword,
     password,
   )
   if (!validPassword) {
-    return { error: "username-password-error" as const }
+    return { error: ERROR.invalidUsernamePass }
   }
-  return { userId: existingUser.id }
+  return { user: existingUser }
 }

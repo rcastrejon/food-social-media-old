@@ -5,7 +5,7 @@ import { valibotResolver } from "@hookform/resolvers/valibot"
 import { useAction } from "next-safe-action/hooks"
 import { useFieldArray, useForm } from "react-hook-form"
 
-import type { NewRecipeInput } from "~/lib/validators/new-recipe"
+import type { PostRecipeInput } from "~/lib/validators/recipe"
 import { SubmitButton } from "~/components/submit-button"
 import { Button } from "~/components/ui/button"
 import {
@@ -19,12 +19,12 @@ import {
 } from "~/components/ui/form"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
-import { NewRecipeSchema } from "~/lib/validators/new-recipe"
+import { PostRecipeSchema } from "~/lib/validators/recipe"
 import { postRecipe } from "./action"
 
 export function NewRecipeForm() {
-  const form = useForm<NewRecipeInput>({
-    resolver: valibotResolver(NewRecipeSchema),
+  const form = useForm<PostRecipeInput>({
+    resolver: valibotResolver(PostRecipeSchema),
     defaultValues: {
       title: "",
       ingredients: [{ content: "" }],
@@ -32,7 +32,7 @@ export function NewRecipeForm() {
   })
   const { execute, status } = useAction(postRecipe)
 
-  function onSubmit(values: NewRecipeInput) {
+  function onSubmit(values: PostRecipeInput) {
     execute(values)
   }
 
@@ -69,7 +69,7 @@ export function NewRecipeForm() {
 function IngredientListFieldArray({
   form,
 }: {
-  form: UseFormReturn<NewRecipeInput>
+  form: UseFormReturn<PostRecipeInput>
 }) {
   const { fields, append, remove } = useFieldArray({
     control: form.control,

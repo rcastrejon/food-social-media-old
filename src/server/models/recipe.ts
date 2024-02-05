@@ -1,17 +1,22 @@
 import "server-only"
 
+import { newId } from "~/lib/ids"
 import { db } from "../db"
 import { recipeTable } from "../db/schema"
 
-type Recipe = {
+export async function createRecipe({
+  userId,
+  title,
+  ingredients,
+}: {
   userId: string
   title: string
-  ingredients: Array<{ content: string }>
-}
-
-export async function createRecipe({ userId, title, ingredients }: Recipe) {
+  ingredients: Array<{
+    content: string
+  }>
+}) {
   const { rowsAffected } = await db.insert(recipeTable).values({
-    id: "test",
+    id: newId("recipe"),
     userId,
     title,
     content: {
@@ -21,6 +26,7 @@ export async function createRecipe({ userId, title, ingredients }: Recipe) {
   return rowsAffected === 1
 }
 
+// only for testing.
 export async function getRecipes() {
   return await db.query.recipeTable.findMany()
 }

@@ -5,6 +5,7 @@ import {
   maxLength,
   minLength,
   object,
+  optional,
   regex,
   string,
 } from "valibot"
@@ -22,6 +23,7 @@ export const SignUpSchema = object(
       minLength(8, "Contraseña demasiado corta."),
     ]),
     passwordConfirm: string(),
+    redirectTo: optional(string()),
   },
   [
     forward(
@@ -39,6 +41,7 @@ export type SignUpInput = Input<typeof SignUpSchema>
 export const SignInSchema = object({
   username: string([minLength(1, "Ingresa tu nombre de usuario.")]),
   password: string([minLength(1, "Ingresa tu contraseña.")]),
+  redirectTo: optional(string()),
 })
 
 export type SignInInput = Input<typeof SignInSchema>

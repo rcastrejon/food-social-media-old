@@ -4,7 +4,7 @@ import { Lucia } from "lucia"
 import { db } from "~/server/db"
 import { sessionTable, userTable } from "~/server/db/schema"
 
-// @ts-expect-error: LibSQL types seem to be broken
+// @ts-expect-error: LibSQL adapter types seem to be broken
 const adapter = new DrizzleSQLiteAdapter(db, sessionTable, userTable)
 
 export const lucia = new Lucia(adapter, {

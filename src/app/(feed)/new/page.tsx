@@ -6,7 +6,7 @@ import { NewRecipeForm } from "./new-recipe-form"
 export default async function Page() {
   const { user } = await validateRequest()
   if (!user) {
-    return redirect("/sign-in")
+    return redirect("/sign-in?redirect-to=/new")
   }
   return (
     <main className="flex min-h-screen flex-col px-6 py-12">

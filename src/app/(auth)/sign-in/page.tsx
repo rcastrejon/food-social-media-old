@@ -1,6 +1,8 @@
 "use client"
 
+import { Suspense } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { valibotResolver } from "@hookform/resolvers/valibot"
 import { useAction } from "next-safe-action/hooks"
 import { useForm } from "react-hook-form"
@@ -21,6 +23,9 @@ import { SignInSchema } from "~/lib/validators/auth"
 import { signIn } from "../actions"
 
 export default function Page() {
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get("redirect-to") ?? undefined
+
   return (
     <main className="mx-auto w-full max-w-96 lg:w-96">
       <div className="flex flex-col space-y-1.5 pb-6">
@@ -31,18 +36,20 @@ export default function Page() {
           No tienes cuenta?{" "}
           <Link
             className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-            href="/sign-up"
+            href={`/sign-up${redirectTo ? `?redirect-to=${redirectTo}` : ""}`}
           >
             Regístrate
           </Link>
         </p>
       </div>
-      <SignInForm />
+      <Suspense fallback={<p>loading...</p>}>
+        <SignInForm redirectTo={redirectTo} />
+      </Suspense>
     </main>
   )
 }
 
-function SignInForm() {
+export function SignInForm({ redirectTo }: { redirectTo: string | undefined }) {
   const form = useForm<SignInInput>({
     resolver: valibotResolver(SignInSchema),
     defaultValues: {
@@ -61,7 +68,11 @@ function SignInForm() {
   })
 
   async function onSubmit(values: SignInInput) {
-    execute(values)
+    execute({
+      username: values.username,
+      password: values.password,
+      redirectTo: redirectTo,
+    })
   }
 
   return (

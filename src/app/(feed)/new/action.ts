@@ -2,12 +2,12 @@
 
 import { redirect } from "next/navigation"
 
-import { NewRecipeSchema } from "~/lib/validators/new-recipe"
+import { PostRecipeSchema } from "~/lib/validators/recipe"
 import { createRecipe } from "~/server/models/recipe"
 import { authAction } from "~/server/safe-action"
 
 export const postRecipe = authAction(
-  NewRecipeSchema,
+  PostRecipeSchema,
   async (recipe, { user }) => {
     await createRecipe({
       userId: user.id,

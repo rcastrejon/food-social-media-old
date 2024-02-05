@@ -8,11 +8,11 @@ export const IngredientSchema = object({
   ]),
 })
 
-export const NewRecipeSchema = object({
-  title: string([toTrimmed(), minLength(1, "Agrégale un título a tu receta.")]),
+export const PostRecipeSchema = object({
+  title: string([toTrimmed(), minLength(1, "Elige un título para tu receta.")]),
   ingredients: array(IngredientSchema, [
     minLength(1, "Agrega al menos un ingrediente."),
   ]),
 })
 
-export type NewRecipeInput = Input<typeof NewRecipeSchema>
+export type PostRecipeInput = Input<typeof PostRecipeSchema>
