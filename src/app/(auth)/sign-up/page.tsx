@@ -76,8 +76,6 @@ function SignUpForm({ redirectTo }: { redirectTo: string | undefined }) {
         <input
           {...form.register("redirectTo", { value: redirectTo })}
           type="hidden"
-          hidden
-          aria-hidden
         />
         <FormField
           control={form.control}
