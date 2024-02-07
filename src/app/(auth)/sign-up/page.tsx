@@ -67,17 +67,18 @@ function SignUpForm({ redirectTo }: { redirectTo: string | undefined }) {
   })
 
   async function onSubmit(values: SignUpInput) {
-    execute({
-      username: values.username,
-      password: values.password,
-      passwordConfirm: values.passwordConfirm,
-      redirectTo,
-    })
+    execute(values)
   }
 
   return (
     <Form {...form}>
       <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+        <input
+          {...form.register("redirectTo", { value: redirectTo })}
+          type="hidden"
+          hidden
+          aria-hidden
+        />
         <FormField
           control={form.control}
           name="username"

@@ -49,7 +49,7 @@ export default function Page() {
   )
 }
 
-export function SignInForm({ redirectTo }: { redirectTo: string | undefined }) {
+function SignInForm({ redirectTo }: { redirectTo: string | undefined }) {
   const form = useForm<SignInInput>({
     resolver: valibotResolver(SignInSchema),
     defaultValues: {
@@ -68,16 +68,18 @@ export function SignInForm({ redirectTo }: { redirectTo: string | undefined }) {
   })
 
   async function onSubmit(values: SignInInput) {
-    execute({
-      username: values.username,
-      password: values.password,
-      redirectTo: redirectTo,
-    })
+    execute(values)
   }
 
   return (
     <Form {...form}>
       <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+        <input
+          {...form.register("redirectTo", { value: redirectTo })}
+          type="hidden"
+          hidden
+          aria-hidden
+        />
         <FormField
           control={form.control}
           name="username"
