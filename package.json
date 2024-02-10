@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
     "format": "prettier --check . --ignore-path .gitignore",
     "db:push": "drizzle-kit push:sqlite",
     "db:studio": "drizzle-kit studio"
@@ -15,10 +16,16 @@
     "@hookform/resolvers": "^3.3.4",
     "@libsql/client": "^0.4.3",
     "@lucia-auth/adapter-drizzle": "^1.0.0",
+    "@radix-ui/react-aspect-ratio": "^1.0.3",
     "@radix-ui/react-label": "^2.0.2",
+    "@radix-ui/react-separator": "^1.0.3",
     "@radix-ui/react-slot": "^1.0.2",
+    "@tanstack/react-query": "^5.18.1",
+    "@tanstack/react-query-devtools": "^5.18.1",
+    "@uploadthing/react": "^6.2.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
+    "date-fns": "^3.3.1",
     "drizzle-orm": "latest",
     "lucia": "^3.0.1",
     "lucide-react": "^0.321.0",
@@ -34,6 +41,7 @@
     "sonner": "^1.4.0",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
+    "uploadthing": "^6.3.3",
     "valibot": "^0.27.1"
   },
   "devDependencies": {

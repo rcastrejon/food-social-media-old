@@ -10,9 +10,10 @@ export const postRecipe = authAction(
   PostRecipeSchema,
   async (recipe, { user }) => {
     await createRecipe({
-      userId: user.id,
       title: recipe.title,
       ingredients: recipe.ingredients,
+      mediaKey: recipe.mediaKey,
+      userId: user.id,
     })
     redirect("/")
   },

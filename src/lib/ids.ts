@@ -1,8 +1,9 @@
 import { generateId } from "lucia"
 
-const prefixes = {
+export const prefixes = {
   user: "user",
   recipe: "recipe",
+  media: "media",
 } as const
 
 export function newId(prefix: keyof typeof prefixes): string {

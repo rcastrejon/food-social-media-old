@@ -4,6 +4,7 @@ import { DrizzleError } from "drizzle-orm/errors"
 import { sql } from "drizzle-orm/sql"
 import { Argon2id } from "oslo/password"
 
+import type { UserInsert, UserSelect } from "../db/schema"
 import { newId } from "~/lib/ids"
 import { db } from "../db"
 import { userTable } from "../db/schema"
@@ -13,19 +14,16 @@ const ERROR = {
   invalidUsernamePass: "invalid-username-pass",
 } as const
 
-export async function getUserByUsername(username: string) {
+async function getUserByUsername(username: UserSelect["username"]) {
   return await db.query.userTable.findFirst({
     where: sql`${userTable.username} = ${username} COLLATE NOCASE`,
   })
 }
 
-export async function createUser({
-  username,
-  password,
-}: {
-  username: string
-  password: string
-}) {
+export async function createUser(
+  username: UserInsert["username"],
+  password: string,
+) {
   const hashedPassword = await new Argon2id().hash(password)
   const userId = newId("user")
 
@@ -35,6 +33,9 @@ export async function createUser({
     await db.transaction(async (tx) => {
       const existingUser = await tx.query.userTable.findFirst({
         where: sql`${userTable.username} = ${username} COLLATE NOCASE`,
+        columns: {
+          id: true,
+        },
       })
       if (existingUser) {
         tx.rollback()
@@ -58,13 +59,10 @@ export async function createUser({
   return { userId }
 }
 
-export async function verifyUsernamePassword({
-  username,
-  password,
-}: {
-  username: string
-  password: string
-}) {
+export async function verifyUsernamePassword(
+  username: UserSelect["username"],
+  password: string,
+) {
   const existingUser = await getUserByUsername(username)
   if (!existingUser) {
     return { error: ERROR.invalidUsernamePass }
@@ -76,5 +74,8 @@ export async function verifyUsernamePassword({
   if (!validPassword) {
     return { error: ERROR.invalidUsernamePass }
   }
-  return { user: existingUser }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { hashedPassword: _, ...userWithoutPassword } = existingUser
+  return { user: userWithoutPassword }
 }

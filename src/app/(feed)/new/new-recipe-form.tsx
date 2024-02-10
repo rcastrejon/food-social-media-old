@@ -1,6 +1,7 @@
 "use client"
 
 import type { UseFormReturn } from "react-hook-form"
+import { useEffect, useState } from "react"
 import { valibotResolver } from "@hookform/resolvers/valibot"
 import { useAction } from "next-safe-action/hooks"
 import { useFieldArray, useForm } from "react-hook-form"
@@ -19,6 +20,8 @@ import {
 } from "~/components/ui/form"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
+import { processImage } from "~/lib/image"
+import { UploadDropzone } from "~/lib/uploadthing"
 import { PostRecipeSchema } from "~/lib/validators/recipe"
 import { postRecipe } from "./action"
 
@@ -32,40 +35,70 @@ export function NewRecipeForm() {
   })
   const { execute, status } = useAction(postRecipe)
 
+  const [imageKey, setImageKey] = useState<string | undefined>(undefined)
+  const { unregister, register } = form
+  useEffect(() => {
+    unregister("mediaKey")
+  }, [imageKey, unregister])
+
   function onSubmit(values: PostRecipeInput) {
     execute(values)
   }
 
   return (
-    <Form {...form}>
-      <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Título</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormDescription>
-                Puede ser el nombre de la receta o un nombre que la describa.
-                ¡Sé creativo!
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <IngredientListFieldArray form={form} />
-        <SubmitButton className="w-full" isSubmitting={status === "executing"}>
-          Publicar
-        </SubmitButton>
-      </form>
-    </Form>
+    <>
+      <UploadDropzone
+        endpoint="imageUploader"
+        onBeforeUploadBegin={async (files) => {
+          return await Promise.all(
+            files.map(async (file) => {
+              const blob = await processImage(await file.arrayBuffer())
+              return new File([blob], file.name, {
+                type: blob.type,
+              })
+            }),
+          )
+        }}
+        onClientUploadComplete={(res) => {
+          if (res[0]) {
+            setImageKey(res[0].key)
+          }
+        }}
+        onUploadError={(error: Error) => {
+          alert(`ERROR! ${error.message}`)
+        }}
+      />
+      <Form {...form}>
+        <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
+          <input {...register("mediaKey", { value: imageKey })} type="hidden" />
+          <FormField
+            control={form.control}
+            name="title"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Título</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormDescription>¡Sé creativo!</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <IngredientListFieldArray form={form} />
+          <SubmitButton
+            className="w-full"
+            isSubmitting={status === "executing"}
+          >
+            Publicar
+          </SubmitButton>
+        </form>
+      </Form>
+    </>
   )
 }
 
-// TODO: Investigate useFieldArray and possibly refactor this component
+// TODO: investigate useFieldArray and possibly refactor this component
 function IngredientListFieldArray({
   form,
 }: {

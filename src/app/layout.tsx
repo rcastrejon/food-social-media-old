@@ -3,8 +3,13 @@ import { Inter, Playfair_Display } from "next/font/google"
 
 import "../globals.css"
 
+import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin"
+import { extractRouterConfig } from "uploadthing/server"
+
 import { Toaster } from "~/components/ui/sonner"
+import { Provider } from "~/lib/providers"
 import { cn } from "~/lib/utils"
+import { ourFileRouter } from "./api/uploadthing/core"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 const playfair = Playfair_Display({
@@ -32,8 +37,11 @@ export default function RootLayout({
           playfair.variable,
         )}
       >
-        {children}
-        <Toaster closeButton />
+        <Provider>
+          <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
+          {children}
+          <Toaster closeButton />
+        </Provider>
       </body>
     </html>
   )

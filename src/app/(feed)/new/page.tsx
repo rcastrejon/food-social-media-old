@@ -8,6 +8,7 @@ export default async function Page() {
   if (!user) {
     return redirect("/sign-in?redirect-to=/new")
   }
+
   return (
     <main className="flex min-h-screen flex-col px-6 py-12">
       <div className="flex flex-col gap-1.5 pb-6">

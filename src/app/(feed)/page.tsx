@@ -1,60 +1,25 @@
-import { cookies } from "next/headers"
-import Link from "next/link"
-import { redirect } from "next/navigation"
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query"
 
-import { Button } from "~/components/ui/button"
-import { lucia } from "~/server/auth"
-import { validateRequest } from "~/server/auth/validate-request"
-import { getRecipes } from "~/server/models/recipe"
+import { getFeed } from "./actions"
+import FeedList from "./feed-list"
 
 export default async function Page() {
-  const { user } = await validateRequest()
-  const recipes = await getRecipes()
+  const queryClient = new QueryClient()
+  await queryClient.prefetchInfiniteQuery({
+    queryKey: ["recipes"],
+    queryFn: async ({ pageParam }) => {
+      return await getFeed(pageParam)
+    },
+    initialPageParam: 1,
+  })
 
   return (
-    <main className="min-h-screen space-y-1.5">
-      <h2 className="font-serif text-2xl font-semibold leading-none tracking-tight">
-        Hola, mundo!
-      </h2>
-      <Button size="sm">Noop</Button>
-      <Button size="sm" asChild>
-        <Link href="/sign-up">Registrarte</Link>
-      </Button>
-      <Button size="sm" asChild>
-        <Link href="/sign-in">Iniciar sesión</Link>
-      </Button>
-      {user && (
-        <form
-          action={async () => {
-            "use server"
-            const { session } = await validateRequest()
-            if (!session) {
-              return {
-                error: "Unauthorized",
-              }
-            }
-
-            await lucia.invalidateSession(session.id)
-
-            const sessionCookie = lucia.createBlankSessionCookie()
-            cookies().set(
-              sessionCookie.name,
-              sessionCookie.value,
-              sessionCookie.attributes,
-            )
-            return redirect("/")
-          }}
-        >
-          <Button type="submit" size="sm" variant="destructive">
-            Cerrar sesión
-          </Button>
-        </form>
-      )}
-      <ul>
-        {recipes.map((recipe) => (
-          <li key={recipe.id}>{recipe.title}</li>
-        ))}
-      </ul>
-    </main>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <FeedList />
+    </HydrationBoundary>
   )
 }
