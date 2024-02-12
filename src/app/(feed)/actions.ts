@@ -2,7 +2,9 @@
 
 import { getRecipes } from "~/server/models/recipe"
 
-export async function getFeed(page: number) {
+export type Recipe = Awaited<ReturnType<typeof getFeedPage>>["rows"][0]
+
+export async function getFeedPage(page: number) {
   const itemsPerPage = 2
   const offset = (page - 1) * itemsPerPage
   const rows = await getRecipes(itemsPerPage + 1, offset)

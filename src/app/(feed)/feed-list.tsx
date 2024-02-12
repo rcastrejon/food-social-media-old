@@ -1,12 +1,15 @@
 "use client"
 
-import { forwardRef, Fragment } from "react"
+import { Fragment, useState } from "react"
 import Image from "next/image"
 import { AspectRatio } from "@radix-ui/react-aspect-ratio"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { intlFormatDistance } from "date-fns"
 
-import { getFeed } from "./actions"
+import type { Recipe } from "./actions"
+import { Skeleton } from "~/components/ui/skeleton"
+import { cn } from "~/lib/utils"
+import { getFeedPage } from "./actions"
 
 export default function FeedList() {
   const {
@@ -18,9 +21,7 @@ export default function FeedList() {
     fetchNextPage,
   } = useInfiniteQuery({
     queryKey: ["recipes"],
-    queryFn: async ({ pageParam }) => {
-      return await getFeed(pageParam)
-    },
+    queryFn: async ({ pageParam }) => await getFeedPage(pageParam),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage ?? undefined,
   })
@@ -34,45 +35,7 @@ export default function FeedList() {
         {data.pages.map((page, key) => (
           <Fragment key={key}>
             {page.rows.map((recipe) => (
-              <Fragment key={recipe.id}>
-                <RecipeCard>
-                  <RecipeCardHeader>
-                    <div>
-                      <h3 className="font-serif text-xl font-semibold leading-none">
-                        {recipe.title}
-                      </h3>
-                    </div>
-                  </RecipeCardHeader>
-                  <AspectRatio
-                    ratio={1}
-                    className="overflow-hidden sm:rounded-sm"
-                  >
-                    <Image
-                      className="object-cover"
-                      src={recipe.media.url}
-                      alt={recipe.title}
-                      fill
-                      sizes="(min-width: 640px) 448px, 100vw"
-                      priority
-                    />
-                  </AspectRatio>
-                  <RecipeCardFooter>
-                    <div className="mt-2">
-                      <p className="text-sm">
-                        Publicado por{" "}
-                        <span className="font-semibold">
-                          {recipe.user?.username ?? "[USUARIO ELIMINADO]"}
-                        </span>
-                      </p>
-                      <p className="text-sm" suppressHydrationWarning>
-                        {intlFormatDistance(recipe.createdAt, new Date(), {
-                          locale: "es",
-                        })}
-                      </p>
-                    </div>
-                  </RecipeCardFooter>
-                </RecipeCard>
-              </Fragment>
+              <RecipeFeedItem key={recipe.id} recipe={recipe} />
             ))}
           </Fragment>
         ))}
@@ -96,26 +59,62 @@ export default function FeedList() {
   }
 }
 
-const RecipeCard = forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ ...props }, ref) => <div className="flex flex-col" ref={ref} {...props} />)
-RecipeCard.displayName = "RecipeCard"
+function RecipeFeedItem({
+  recipe: { title, user, createdAt, media },
+}: {
+  recipe: Recipe
+}) {
+  return (
+    <div className="flex flex-col">
+      <div className="flex items-center px-4 py-3.5 sm:px-0">
+        <div>
+          <h3 className="font-serif text-xl font-semibold leading-none">
+            {title}
+          </h3>
+        </div>
+      </div>
+      <RecipeImage src={media.url} alt={title} />
+      <div className="px-4 sm:px-0">
+        <div className="flex flex-col">
+          <div className="mt-2">
+            <p className="text-sm">
+              Publicado por{" "}
+              <span className="font-semibold">
+                {user?.username ?? "[USUARIO ELIMINADO]"}
+              </span>
+            </p>
+            <p className="text-sm" suppressHydrationWarning>
+              {intlFormatDistance(createdAt, new Date(), {
+                locale: "es",
+              })}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
-const RecipeCardHeader = forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ ...props }, ref) => (
-  <div className="flex items-center px-4 py-3.5 sm:px-0" ref={ref} {...props} />
-))
-RecipeCardHeader.displayName = "RecipeCardHeader"
+function RecipeImage({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false)
+  const hidden = !loaded
 
-const RecipeCardFooter = forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ ...props }, ref) => (
-  <div className="px-4 sm:px-0">
-    <div className="flex flex-col" ref={ref} {...props} />
-  </div>
-))
-RecipeCardFooter.displayName = "RecipeCardFooter"
+  return (
+    <AspectRatio ratio={1} className="overflow-hidden sm:rounded-sm">
+      <Image
+        className={cn("object-cover", hidden && "hidden")}
+        src={src}
+        alt={alt}
+        sizes="(min-width: 640px) 448px, 100vw"
+        placeholder="empty"
+        fill
+        priority
+        onLoad={() => setLoaded(true)}
+        onError={() => setLoaded(true)}
+      />
+      {hidden && (
+        <Skeleton className="h-full w-full rounded-none sm:rounded-sm" />
+      )}
+    </AspectRatio>
+  )
+}
