@@ -1,16 +1,13 @@
 "use client"
 
-import type { UseFormReturn } from "react-hook-form"
-import { useEffect, useState } from "react"
-import { valibotResolver } from "@hookform/resolvers/valibot"
+import { useEffect } from "react"
 import { useAction } from "next-safe-action/hooks"
-import { useFieldArray, useForm } from "react-hook-form"
+import { useFieldArray, useFormContext } from "react-hook-form"
 
 import type { PostRecipeInput } from "~/lib/validators/recipe"
 import { SubmitButton } from "~/components/submit-button"
 import { Button } from "~/components/ui/button"
 import {
-  Form,
   FormControl,
   FormDescription,
   FormField,
@@ -21,102 +18,114 @@ import {
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 import { processImage } from "~/lib/image"
-import { UploadDropzone } from "~/lib/uploadthing"
-import { PostRecipeSchema } from "~/lib/validators/recipe"
+import { UploadButton } from "~/lib/uploadthing"
 import { postRecipe } from "./action"
+import {
+  useNewRecipeFormActorRef,
+  useNewRecipeFormSelector,
+} from "./form-provider"
+
+export function UploadImageButton() {
+  const actorRef = useNewRecipeFormActorRef()
+  const mediaKey = useNewRecipeFormSelector((state) => state.context.mediaKey)
+  const isImageLoaded = mediaKey !== undefined
+
+  function removeImage() {
+    actorRef.send({
+      type: "image.remove",
+    })
+  }
+
+  if (isImageLoaded) {
+    return (
+      <div>
+        <p>image loaded: {mediaKey}</p>
+        <button onClick={removeImage}>delete</button>
+      </div>
+    )
+  }
+  return (
+    <UploadButton
+      endpoint="imageUploader"
+      onBeforeUploadBegin={async (files) => {
+        return await Promise.all(
+          files.map(async (file) => {
+            const blob = await processImage(await file.arrayBuffer())
+            return new File([blob], file.name, {
+              type: blob.type,
+            })
+          }),
+        )
+      }}
+      onClientUploadComplete={(res) => {
+        const uploadResponse = res[0]
+        if (uploadResponse) {
+          actorRef.send({
+            type: "image.load",
+            mediaKey: uploadResponse.key,
+          })
+        }
+      }}
+    />
+  )
+}
 
 export function NewRecipeForm() {
-  const form = useForm<PostRecipeInput>({
-    resolver: valibotResolver(PostRecipeSchema),
-    defaultValues: {
-      title: "",
-      ingredients: [{ content: "" }],
-    },
-  })
-  const { execute, status } = useAction(postRecipe)
+  const { status, execute } = useAction(postRecipe)
+  const { control, handleSubmit, setValue } = useFormContext<PostRecipeInput>()
 
-  const [imageKey, setImageKey] = useState<string | undefined>(undefined)
-  const { unregister, register } = form
-  useEffect(() => {
-    unregister("mediaKey")
-  }, [imageKey, unregister])
+  const mediaKey = useNewRecipeFormSelector((state) => state.context.mediaKey)
+  const disabled = !mediaKey
 
   function onSubmit(values: PostRecipeInput) {
     execute(values)
   }
 
+  useEffect(() => {
+    setValue("mediaKey", mediaKey ?? "")
+  }, [mediaKey, setValue])
+
   return (
-    <>
-      <UploadDropzone
-        endpoint="imageUploader"
-        onBeforeUploadBegin={async (files) => {
-          return await Promise.all(
-            files.map(async (file) => {
-              const blob = await processImage(await file.arrayBuffer())
-              return new File([blob], file.name, {
-                type: blob.type,
-              })
-            }),
-          )
-        }}
-        onClientUploadComplete={(res) => {
-          if (res[0]) {
-            setImageKey(res[0].key)
-          }
-        }}
-        onUploadError={(error: Error) => {
-          alert(`ERROR! ${error.message}`)
-        }}
+    <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+      <FormField
+        control={control}
+        disabled={disabled}
+        name="title"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Título</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormDescription>¡Sé creativo!</FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
       />
-      <Form {...form}>
-        <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-          <input {...register("mediaKey", { value: imageKey })} type="hidden" />
-          <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Título</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormDescription>¡Sé creativo!</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <IngredientListFieldArray form={form} />
-          <SubmitButton
-            className="w-full"
-            isSubmitting={status === "executing"}
-          >
-            Publicar
-          </SubmitButton>
-        </form>
-      </Form>
-    </>
+      <IngredientListFieldArray disabled={disabled} />
+      <SubmitButton
+        type="submit"
+        disabled={disabled}
+        className="w-full"
+        isSubmitting={status === "executing"}
+      >
+        Publicar
+      </SubmitButton>
+    </form>
   )
 }
 
-// TODO: investigate useFieldArray and possibly refactor this component
-function IngredientListFieldArray({
-  form,
-}: {
-  form: UseFormReturn<PostRecipeInput>
-}) {
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
+function IngredientListFieldArray({ disabled }: { disabled: boolean }) {
+  const { control, trigger } = useFormContext<PostRecipeInput>()
+  const { fields, append } = useFieldArray({
+    control: control,
     name: "ingredients",
   })
 
   async function addIngredient() {
-    // Add a field only if the last field is valid
-    const lastFieldName = `ingredients.${fields.length - 1}.content` as const
-    const isValid = await form.trigger(lastFieldName)
+    const isValid = await trigger("ingredients", { shouldFocus: true })
     if (isValid) {
       append({ content: "" })
-    } else {
-      form.setFocus(lastFieldName)
     }
   }
 
@@ -127,22 +136,13 @@ function IngredientListFieldArray({
         {fields.map((field, index) => (
           <FormField
             key={field.id}
-            control={form.control}
+            disabled={disabled}
+            control={control}
             name={`ingredients.${index}.content`}
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <div className="flex w-full items-center gap-2">
-                    <Input {...field} />
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      type="button"
-                      onClick={() => remove(index)}
-                    >
-                      <span className="i-[lucide--trash-2] h-4 w-4" />
-                    </Button>
-                  </div>
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -155,6 +155,7 @@ function IngredientListFieldArray({
         variant="secondary"
         type="button"
         onClick={addIngredient}
+        disabled={disabled}
       >
         Nuevo ingrediente
       </Button>

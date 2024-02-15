@@ -13,7 +13,7 @@ export const PostRecipeSchema = object({
   ingredients: array(IngredientSchema, [
     minLength(1, "Agrega al menos un ingrediente."),
   ]),
-  mediaKey: string(),
+  mediaKey: string([minLength(1, "Es necesario subir una imagen.")]),
 })
 
 export type PostRecipeInput = Input<typeof PostRecipeSchema>

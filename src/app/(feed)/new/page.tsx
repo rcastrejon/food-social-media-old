@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation"
 
 import { validateRequest } from "~/server/auth/validate-request"
-import { NewRecipeForm } from "./new-recipe-form"
+import { NewRecipeFormProvider } from "./form-provider"
+import { NewRecipeForm, UploadImageButton } from "./new-recipe-form"
 
 export default async function Page() {
   const { user } = await validateRequest()
@@ -19,7 +20,10 @@ export default async function Page() {
           Publica una receta para que otros usuarios puedan disfrutarla.
         </p>
       </div>
-      <NewRecipeForm />
+      <NewRecipeFormProvider>
+        <UploadImageButton />
+        <NewRecipeForm />
+      </NewRecipeFormProvider>
     </main>
   )
 }
