@@ -1,14 +1,12 @@
 "use client"
 
-import { Fragment, useState } from "react"
+import { Fragment } from "react"
 import Image from "next/image"
 import { AspectRatio } from "@radix-ui/react-aspect-ratio"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { intlFormatDistance } from "date-fns"
 
 import type { Recipe } from "./actions"
-import { Skeleton } from "~/components/ui/skeleton"
-import { cn } from "~/lib/utils"
 import { getFeedPage } from "./actions"
 
 export default function FeedList() {
@@ -73,7 +71,15 @@ function RecipeFeedItem({
           </h3>
         </div>
       </div>
-      <RecipeImage src={media.url} alt={title} />
+      <AspectRatio ratio={1} className="overflow-hidden sm:rounded-sm">
+        <Image
+          src={media.url}
+          alt={title}
+          sizes="(min-width: 640px) 448px, 100vw"
+          placeholder="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
+          fill
+        />
+      </AspectRatio>
       <div className="px-4 sm:px-0">
         <div className="flex flex-col">
           <div className="mt-2">
@@ -92,29 +98,5 @@ function RecipeFeedItem({
         </div>
       </div>
     </div>
-  )
-}
-
-function RecipeImage({ src, alt }: { src: string; alt: string }) {
-  const [loaded, setLoaded] = useState(false)
-  const hidden = !loaded
-
-  return (
-    <AspectRatio ratio={1} className="overflow-hidden sm:rounded-sm">
-      <Image
-        className={cn("object-cover", hidden && "hidden")}
-        src={src}
-        alt={alt}
-        sizes="(min-width: 640px) 448px, 100vw"
-        placeholder="empty"
-        fill
-        priority
-        onLoad={() => setLoaded(true)}
-        onError={() => setLoaded(true)}
-      />
-      {hidden && (
-        <Skeleton className="h-full w-full rounded-none sm:rounded-sm" />
-      )}
-    </AspectRatio>
   )
 }

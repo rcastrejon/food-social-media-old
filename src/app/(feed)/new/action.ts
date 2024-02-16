@@ -1,5 +1,6 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
 import { PostRecipeSchema } from "~/lib/validators/recipe"
@@ -15,6 +16,7 @@ export const postRecipe = authAction(
       mediaKey: recipe.mediaKey,
       userId: user.id,
     })
+    revalidatePath("/")
     redirect("/")
   },
 )
