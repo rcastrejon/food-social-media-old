@@ -29,11 +29,15 @@ export default function FeedList() {
   }
   if (data) {
     return (
-      <div className="sm:m-auto sm:max-w-md">
-        {data.pages.map((page, key) => (
-          <Fragment key={key}>
-            {page.rows.map((recipe) => (
-              <RecipeFeedItem key={recipe.id} recipe={recipe} />
+      <div className="w-full sm:m-auto sm:max-w-md">
+        {data.pages.map((page, pageIdx) => (
+          <Fragment key={pageIdx}>
+            {page.rows.map((recipe, idx) => (
+              <RecipeFeedItem
+                key={recipe.id}
+                recipe={recipe}
+                priority={pageIdx === 0 && idx < 2}
+              />
             ))}
           </Fragment>
         ))}
@@ -59,8 +63,10 @@ export default function FeedList() {
 
 function RecipeFeedItem({
   recipe: { title, user, createdAt, media },
+  priority,
 }: {
   recipe: Recipe
+  priority: boolean
 }) {
   return (
     <div className="flex flex-col">
@@ -71,13 +77,17 @@ function RecipeFeedItem({
           </h3>
         </div>
       </div>
-      <AspectRatio ratio={1} className="overflow-hidden sm:rounded-sm">
+      <AspectRatio
+        ratio={1}
+        className="overflow-hidden bg-primary/10 sm:rounded-md"
+      >
         <Image
           src={media.url}
           alt={title}
           sizes="(min-width: 640px) 448px, 100vw"
           placeholder="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
           fill
+          priority={priority}
         />
       </AspectRatio>
       <div className="px-4 sm:px-0">
@@ -86,12 +96,13 @@ function RecipeFeedItem({
             <p className="text-sm">
               Publicado por{" "}
               <span className="font-semibold">
-                {user?.username ?? "[USUARIO ELIMINADO]"}
+                {user?.username ?? "[ELIMINADO]"}
               </span>
             </p>
             <p className="text-sm" suppressHydrationWarning>
               {intlFormatDistance(createdAt, new Date(), {
                 locale: "es",
+                style: "short",
               })}
             </p>
           </div>
